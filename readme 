@@ -1,0 +1,90 @@
+User upload 5,000 files  →  S3 bucket (Event Notification on PUT)  
+                                 ↓
+                            SNS Topic (publish)
+                                 ↓
+                            SQS Queue (standard)
+                                 ↓
+                       Lambda functions (poll SQS)  ← Module 2
+
+Step 1  -
+ s3 bucket (Uncheck “Block all public access”)
+
+Step 2 -
+    Console → Amazon SNS → Topics → Create topic.
+    Choose Standard topic type (not FIFO).
+
+Step 3 - 
+    Console → Amazon SQS → Create queue.
+    Select Standard queue (NOT FIFO)
+    Name: frp-uploads-queue.
+
+Step 4 — Subscribe SQS queue to SNS topic
+    Console → SNS → open frp-uploads-topic.
+    Subscriptions → Create subscription.
+    Protocol: SQS
+    Endpoint: select the frp-uploads-queue ARN 
+    Create subscription.
+
+Step F — Configure S3 Event Notification to publish to the SNS topic
+
+Console → S3 → open your bucket → Properties → Event notifications → Add notification.
+    Name: frp-put-to-sns.
+    Event types: “All object create events”.
+    Prefix/Suffix - .txt.
+    Destination: SNS → choose your frp-uploads-topic.
+
+
+SQS policy 
+{
+  "Version": "2012-10-17",
+  "Id": "__default_policy_ID",
+  "Statement": [
+    {
+      "Sid": "__owner_statement",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::681588999420:root"
+      },
+      "Action": "SQS:*",
+      "Resource": "arn:aws:sqs:us-east-1:681588999420:frp-upload-queue"
+    },
+    {
+      "Sid": "topic-subscription-arn:aws:sns:us-east-1:681588999420:frp-upload-topic",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "sns.amazonaws.com"
+      },
+      "Action": "SQS:SendMessage",
+      "Resource": "arn:aws:sqs:us-east-1:681588999420:frp-upload-queue",
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:sns:us-east-1:681588999420:frp-upload-topic"
+        }
+      }
+    }
+  ]
+}
+
+STEP 1 — Create the DynamoDB Table “Dictionary”
+    Open AWS Management Console → DynamoDB → Tables → Create table
+    Table name → Dictionary
+    Partition key → passphrase (String)
+    Leave sort key empty.
+    Keep On-demand capacity mode (default, pay-per-request).
+    Scroll → Create table.
+
+STEP 2 — Create the “Checks” Table
+    Go to DynamoDB → Tables → Create table.
+    Table name → Checks
+    Partition key → timestamp (String)
+    Optionally add a sort key: fileIndex (Number).
+    Keep capacity mode as On-demand.
+
+STEP 3 — Create the “Matches” Table
+    Again → Create table.
+    Table name → Matches
+    Partition key → timestamp (String)
+    Sort key → fileIndex (Number)
+    Keep On-demand.
+
+
