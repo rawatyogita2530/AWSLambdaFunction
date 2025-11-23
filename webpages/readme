@@ -1,0 +1,52 @@
+STEP 1 -  db (dynamodb)
+table name - Orders
+partition key - OrderId
+
+STEP 2 - then 2 lambda's get and post lambda
+
+api for both's
+
+create resource first make the 
+
+resource name - storeOrder
+method - POST  (proxy integration) - attach post lambda
+
+resource name  - orders
+method - GET  (proxy integration) - attach get lambda
+
+STEP 3 - S3 bucket 
+
+Bucket Versioning - On
+permission tab - Block public access (off)
+permission tab - Bucket policy (attach policy to allow lambda to put object in bucket)
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::web-page-yogita-rawat/*"
+        }
+    ]
+}
+
+Properties tab - 
+Static website hosting - Enable
+Index document - index.html
+
+"upload all files - index.html, style.css, script.js , dashboard.html, dashboard.js, dashboard.css"
+
+
+
+STEP 4 - Test Lambda 
+json for POST 
+{
+  "body": "{\"items\": {\"Onni\": 2}, \"timestamp\": \"2024-01-16T12:00:00Z\", \"orderSignature\": \"SIGN-101\", \"agent\": \"tester\"}"
+}
+
+
+json for GET 
+{
+  "httpMethod": "GET"
+}
