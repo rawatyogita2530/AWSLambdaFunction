@@ -2,7 +2,7 @@ STEP 1 -  db (dynamodb)
 table name - Orders
 partition key - OrderId
 
-STEP 2 - then 2 lambda's get and post lambda
+STEP 2 - then 2 lambda's GET and POST lambda
 
 api for both's
 
